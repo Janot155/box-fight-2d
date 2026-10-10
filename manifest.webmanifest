@@ -1,0 +1,24 @@
+{
+  "id": "./",
+  "name": "Box Fight 2D",
+  "short_name": "Box Fight 2D",
+  "description": "Build, fight and win in Box Fight 2D.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07101d",
+  "theme_color": "#081426",
+  "orientation": "any",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
