@@ -1,0 +1,18 @@
+{
+  "name": "box-fight-central-matchmaking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Central matchmaking queue for Box Fight 2D",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
