@@ -847,6 +847,11 @@ html.performance-mode .arena-hero-art{filter:drop-shadow(0 8px 5px rgba(0,0,0,.2
 #bundleQuickOutfits .bundle-quick-choice.locked-choice{opacity:.82}
 @media(max-width:420px){#bundleQuickOutfits{grid-template-columns:1fr 1fr}#bundleQuickOutfits .bundle-quick-choice{min-height:92px}}
 
+
+.matchmaking-center-status{margin:10px 0 0!important;padding:9px 10px;border-radius:9px;background:rgba(83,229,255,.07);border:1px solid rgba(83,229,255,.2);color:#bceeff!important;font-size:10px!important;font-weight:800;letter-spacing:.2px;line-height:1.5;text-align:left}
+.matchmaking-center-status[data-state="online"]{color:#baf7ca!important;border-color:rgba(74,222,128,.28);background:rgba(74,222,128,.07)}
+.matchmaking-center-status[data-state="searching"]{color:#ffe3a1!important;border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.07)}
+.matchmaking-center-status[data-state="error"]{color:#ffb8b8!important;border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.07)}
 </style><style id="user-requested-fixes">
 /* User-requested lobby adjustments: live in-match avatar, settings language, full duel art. */
 #menuHeroArt.arena-hero-art{display:block!important;object-fit:contain!important;background:transparent!important;image-rendering:auto!important;}
@@ -1105,6 +1110,31 @@ body.mobile-playing #perfHud{top:max(6px,env(safe-area-inset-top))!important;lef
  #shop .bundle-extras b{font-size:8px}
 }
 </style>
+
+<style id="online-mode-selector-v1">
+.online-match-controls{position:relative;z-index:2;margin:10px 0 8px;padding:12px;border:1px solid rgba(116,177,239,.22);border-radius:14px;background:linear-gradient(145deg,rgba(8,20,38,.86),rgba(19,20,48,.76));}
+.online-control-label{margin:0 0 7px;color:#a7c4e8;font-size:9px;font-weight:1000;letter-spacing:1.7px;text-align:left;}
+.online-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px;}
+#ui .online-mode-tabs button,.online-method-tabs button{min-width:0;min-height:43px;margin:0;padding:7px 6px;border:1px solid rgba(131,171,220,.28);border-radius:9px;background:rgba(28,48,76,.76);color:#dceaff;box-shadow:none;font-size:14px;font-weight:1000;}
+.online-mode-tabs button small{display:block;margin-top:2px;color:#91a9c9;font-size:8px;letter-spacing:1.2px;}
+#ui .online-mode-tabs button.selected{border-color:#62e5ff;background:linear-gradient(135deg,rgba(45,199,241,.22),rgba(111,102,255,.25));box-shadow:inset 0 0 0 1px rgba(98,229,255,.2),0 0 14px rgba(70,185,255,.1);color:#fff;}
+.online-method-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;}
+#ui .online-method-tabs button{font-size:10px;letter-spacing:.4px;}
+#ui .online-method-tabs button.selected{border-color:#c7ff63;background:rgba(137,193,80,.14);color:#eaffcb;}
+.online-flow-panel{padding:11px;border:1px solid rgba(120,159,212,.16);border-radius:10px;background:rgba(3,12,25,.56);}
+.online-flow-icon{font-size:22px;margin-bottom:3px;}
+.online-flow-panel>strong{display:block;color:#f0f7ff;font-size:13px;text-align:left;}
+.online-flow-panel>p{margin:5px 0 8px!important;color:#a9bdd9!important;font-size:11px!important;line-height:1.45;text-align:left;}
+.online-flow-panel[hidden]{display:none!important;}
+.room-code-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center;}
+#ui .room-code-entry input{min-width:0;margin:0!important;font-variant-numeric:tabular-nums;letter-spacing:5px;text-align:center;font-size:20px;font-weight:1000;}
+#ui .room-code-entry .room-generate{width:auto;min-width:88px;margin:0!important;padding:8px;font-size:10px;letter-spacing:.2px;}
+.room-code-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
+#ui .room-code-actions button{margin:0!important;min-width:0;font-size:10px;letter-spacing:.15px;}
+.online-capability-note{margin:8px 0 0!important;padding:8px 9px;border-radius:8px;background:rgba(255,190,92,.08);border:1px solid rgba(255,190,92,.18);color:#f5d7a4!important;font-size:10px!important;line-height:1.45;text-align:left;}
+.online-capability-note[hidden]{display:none!important;}
+@media(max-width:560px){.online-match-controls{padding:9px}.online-mode-tabs{gap:5px}.online-mode-tabs button small{letter-spacing:.7px}.room-code-actions{grid-template-columns:1fr}.room-code-entry{grid-template-columns:minmax(0,1fr) 82px}#ui .room-code-entry input{font-size:18px;letter-spacing:4px}}
+</style>
 </head><body>
 <canvas id="c"></canvas>
 <div id="perfHud" aria-live="off"><span id="perfFps">FPS: --</span><span class="perf-divider"></span><span id="perfPing">Ping: —</span></div>
@@ -1232,11 +1262,35 @@ body.mobile-playing #perfHud{top:max(6px,env(safe-area-inset-top))!important;lef
     <div class="feature-pills"><span>🧱 BUILD</span><span>🎯 AIM</span><span>⚡ EDIT</span></div>
     <button id="bo" class="g signout-action">Odhlásit se</button>
    </section>
-   <section class="lobby-panel online-panel"><div class="section-kicker">02 / DUO</div><h2>Online 1v1</h2><p class="panel-copy">Pozvi kamaráda, zadejte stejný kód a rozhodněte to v aréně.</p>
+   <section class="lobby-panel online-panel"><div class="section-kicker">02 / DUO</div><h2>Online Multiplayer</h2><p class="panel-copy">Vyber týmový režim a najdi soupeře přes rychlou frontu nebo pětičíselný kód místnosti.</p>
     <div class="duo-art"><div class="duo-glow"></div><div class="duo-player blue-player">⚡</div><div class="duo-vs">VS</div><div class="duo-player violet-player">🔥</div><div class="duo-ground"></div></div>
-    <label for="rc">KÓD MÍSTNOSTI</label><input id="rc" maxlength="20" placeholder="Např. duo-1234" autocomplete="off">
-    <button id="bn" class="o online-action">🌐 PŘIPOJIT / VYTVOŘIT MÍSTNOST <span>➜</span></button><p id="ol" class="hint status-line">Připraveno. Zadejte společný kód.</p>
-    <p class="hint online-tip">Online hraní vyžaduje internet a stránku dostupnou přes HTTPS. Sdílej odkaz na hru a kód místnosti.</p>
+    <div class="online-match-controls">
+     <div class="online-control-label" id="onlineModeLabel">ONLINE MODE</div>
+     <div class="online-mode-tabs" role="group" aria-label="Choose online team mode">
+      <button type="button" class="online-mode-choice selected" data-online-mode="1v1" aria-pressed="true">1v1 <small>DUEL</small></button>
+      <button type="button" class="online-mode-choice" data-online-mode="1v2" aria-pressed="false">1v2 <small>TRIO</small></button>
+      <button type="button" class="online-mode-choice" data-online-mode="2v2" aria-pressed="false">2v2 <small>SQUADS</small></button>
+     </div>
+     <div class="online-control-label" id="onlineMethodLabel">HOW TO FIND A MATCH</div>
+     <div class="online-method-tabs" role="group" aria-label="Choose matchmaking method">
+      <button type="button" id="quickQueueTab" class="online-method-choice" aria-pressed="false">⚡ QUICK QUEUE</button>
+      <button type="button" id="roomCodeTab" class="online-method-choice selected" aria-pressed="true">🔢 ROOM CODE</button>
+     </div>
+     <div id="onlineQueuePanel" class="online-flow-panel" hidden>
+      <div class="online-flow-icon">⚡</div><strong id="quickQueueTitle">Find a random opponent</strong>
+      <p id="quickQueueDescription">Quick Queue pairs you with a random player.</p>
+      <p id="matchmakingCenterStatus" class="matchmaking-center-status" data-state="offline" aria-live="polite">CENTRAL MATCHMAKING CENTER · NOT CONNECTED</p>
+      <button type="button" id="quickQueueStart" class="o online-action">⚡ FIND MATCH</button>
+     </div>
+     <div id="onlineCodePanel" class="online-flow-panel">
+      <label for="rc" id="roomCodeLabel">5-DIGIT ROOM CODE</label>
+      <div class="room-code-entry"><input id="rc" maxlength="5" inputmode="numeric" pattern="[0-9]{5}" placeholder="12345" autocomplete="off" aria-label="Five digit room code"><button type="button" id="generateRoomCode" class="g room-generate">🎲 RANDOM</button></div>
+      <div class="room-code-actions"><button type="button" id="createOnlineRoomBtn" class="o online-action">＋ CREATE ROOM</button><button type="button" id="joinOnlineRoomBtn" class="g online-action">↗ JOIN ROOM</button></div>
+     </div>
+     <p id="onlineCapabilityNote" class="online-capability-note"></p>
+    </div>
+    <button id="bn" hidden class="o online-action">🌐 PŘIPOJIT / VYTVOŘIT MÍSTNOST</button><p id="ol" class="hint status-line" aria-live="polite">Připraveno. Vytvoř místnost nebo zadej pětičíselný kód.</p>
+    <p class="hint online-tip">Online hraní vyžaduje internet a stránku dostupnou přes HTTPS. Sdílej odkaz na hru a pětičíselný kód místnosti.</p>
    </section>
   </div>
   <div class="lobby-footer"><span>⌨️ WASD pohyb</span><span>🖱️ míření a střelba</span><span>1/2 zbraně · R přebití</span><span>3 štít · 4 ryba</span><span>F zeď · G edit · H reset · V emote</span></div>
@@ -1569,6 +1623,106 @@ try{name=localStorage.getItem('mr_name')||'';stats=JSON.parse(localStorage.getIt
 function save(){try{localStorage.setItem('mr_name',name);localStorage.setItem('mr_stats',JSON.stringify(stats));localStorage.setItem('mr_total_wins',String(Math.max(totalWins||0,Number(stats.w)||0)))}catch(e){}}
 function saveLook(){selectedWeaponSkin=selectedRifleSkin;try{localStorage.setItem('mr_skin',selectedSkin);localStorage.setItem('mr_hat',selectedHat);localStorage.setItem('mr_skin_style',selectedStyle);localStorage.setItem('mr_face',selectedFace);localStorage.setItem('mr_emote',selectedEmote);localStorage.setItem('mr_accent',selectedAccent);localStorage.setItem('mr_backbling',selectedBackbling);localStorage.setItem('mr_weapon_skin',selectedRifleSkin);localStorage.setItem('mr_rifle_skin',selectedRifleSkin);localStorage.setItem('mr_shotgun_skin',selectedShotgunSkin);localStorage.setItem('mr_shield_skin',selectedShieldSkin);localStorage.setItem('mr_fish_skin',selectedFishSkin)}catch(e){}if(P){P.skin=selectedSkin;P.hat=selectedHat;P.skinStyle=selectedStyle;P.face=selectedFace;P.accent=selectedAccent;P.backbling=selectedBackbling;P.weaponSkin=selectedRifleSkin;P.weaponSkins={rifle:selectedRifleSkin,shotgun:selectedShotgunSkin};P.shieldSkin=selectedShieldSkin;P.fishSkin=selectedFishSkin}renderWardrobe()}
 const ol=m=>$('ol').textContent=m;
+// Set this to the deployed central matchmaking service URL once, then redeploy the website.
+const MATCHMAKER_URL='https://YOUR-MATCHMAKER.onrender.com';
+let matchmakingSocket=null,matchmakingConnectPromise=null,matchmakingQueueActive=false,queuedMatch=null,activeCentralMatchId=null;
+let selectedOnlineMode='1v1',selectedOnlineMethod='code';
+const ONLINE_COPY={
+ cs:{mode:'REŽIM ONLINE',method:'JAK CHCEŠ HRÁT?',queue:'⚡ RYCHLÁ FRONTa',code:'🔢 KÓD MÍSTNOSTI',qTitle:'Najdi náhodného soupeře',qDesc:'Centrální server hledá hráče z celého webu ve stejném režimu.',find:'⚡ HLEDAT HRU',codeLabel:'PĚTIMÍSTNÝ KÓD MÍSTNOSTI',random:'🎲 NÁHODNÝ KÓD',create:'＋ VYTVOŘIT MÍSTNOST',join:'↗ PŘIPOJIT SE',quickNote:'Připojí tě do společné fronty a spojí s hráči vybraného režimu.',teamNote:'Aktuální síťová část hry podporuje pouze 1v1. Pro 1v2 a 2v2 je potřeba doplnit server a synchronizaci více hráčů.',readyNote:'Přímé místnosti 1v1 jsou dostupné. Vytvoř nový pětičíselný kód nebo zadej kód kamaráda.',needCode:'Zadej pětičíselný kód místnosti.',madeCode:'Kód místnosti: CODE. Pošli ho kamarádovi, aby se připojil.',quickUnavailable:'Centrální server není nakonfigurovaný. Nasazení serveru a nastavení MATCHMAKER_URL je potřeba dokončit.'},
+ en:{mode:'ONLINE MODE',method:'HOW DO YOU WANT TO PLAY?',queue:'⚡ QUICK QUEUE',code:'🔢 ROOM CODE',qTitle:'Find a random opponent',qDesc:'The central server looks for players from the whole website in the same mode.',find:'⚡ FIND MATCH',codeLabel:'5-DIGIT ROOM CODE',random:'🎲 RANDOM CODE',create:'＋ CREATE ROOM',join:'↗ JOIN ROOM',quickNote:'Join the shared queue and get paired with players in your selected mode.',teamNote:'The current network gameplay supports 1v1 only. 1v2 and 2v2 need a multiplayer server and multi-player state sync.',readyNote:'Direct 1v1 rooms are available. Generate a five-digit code or enter your friend’s code.',needCode:'Enter a five-digit room code.',madeCode:'Room code: CODE. Share it with your friend so they can join.',quickUnavailable:'Quick Queue needs a central matchmaking server, which is not configured in this HTML build.'},
+ fr:{mode:'MODE EN LIGNE',method:'COMMENT JOUER ?',queue:'⚡ FILE RAPIDE',code:'🔢 CODE DE SALLE',qTitle:'Trouver un adversaire aléatoire',qDesc:'Le serveur central recherche des joueurs du même mode sur tout le site.',find:'⚡ TROUVER UNE PARTIE',codeLabel:'CODE DE SALLE À 5 CHIFFRES',random:'🎲 CODE ALÉATOIRE',create:'＋ CRÉER UNE SALLE',join:'↗ REJOINDRE',quickNote:'Rejoins la file commune pour être associé à des joueurs du mode choisi.',teamNote:'Le réseau actuel prend seulement en charge le 1v1. Le 1v2 et le 2v2 nécessitent un serveur multijoueur et une synchronisation de plusieurs joueurs.',readyNote:'Les salles directes en 1v1 sont disponibles. Génère un code à cinq chiffres ou saisis celui de ton ami.',needCode:'Saisis un code de salle à cinq chiffres.',madeCode:'Code de salle : CODE. Partage-le avec ton ami.',quickUnavailable:'Le serveur central n’est pas configuré. Déploie le service et définis MATCHMAKER_URL.'}
+};
+function onlineCopy(){return ONLINE_COPY[currentLanguage]||ONLINE_COPY.cs}
+function renderOnlineControls(){const c=onlineCopy();const set=(id,v)=>{const e=$(id);if(e)e.textContent=v};set('onlineModeLabel',c.mode);set('onlineMethodLabel',c.method);set('quickQueueTab',c.queue);set('roomCodeTab',c.code);set('quickQueueTitle',c.qTitle);set('quickQueueDescription',c.qDesc);set('quickQueueStart',c.find);set('roomCodeLabel',c.codeLabel);set('generateRoomCode',c.random);set('createOnlineRoomBtn',c.create);set('joinOnlineRoomBtn',c.join);document.querySelectorAll('[data-online-mode]').forEach(b=>{const active=b.dataset.onlineMode===selectedOnlineMode;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active))});const q=$('quickQueueTab'),r=$('roomCodeTab');if(q){q.classList.toggle('selected',selectedOnlineMethod==='queue');q.setAttribute('aria-pressed',String(selectedOnlineMethod==='queue'))}if(r){r.classList.toggle('selected',selectedOnlineMethod==='code');r.setAttribute('aria-pressed',String(selectedOnlineMethod==='code'))}if($('onlineQueuePanel'))$('onlineQueuePanel').hidden=selectedOnlineMethod!=='queue';if($('onlineCodePanel'))$('onlineCodePanel').hidden=selectedOnlineMethod!=='code';const note=$('onlineCapabilityNote');if(note){note.hidden=false;note.textContent=selectedOnlineMode!=='1v1'?c.teamNote:(selectedOnlineMethod==='queue'?c.quickNote:c.readyNote)} }
+function setOnlineMode(mode){if(!['1v1','1v2','2v2'].includes(mode))return;if(matchmakingQueueActive&&matchmakingSocket){matchmakingSocket.emit('queue:leave');matchmakingQueueActive=false;waiting=false;const qb=$('quickQueueStart');if(qb)qb.textContent=onlineCopy().find;setMatchmakingStatus('QUEUE CANCELLED','offline')}selectedOnlineMode=mode;try{localStorage.setItem('mr_online_mode',mode)}catch(e){}renderOnlineControls();ol(onlineCopy()[mode==='1v1'?'readyNote':'teamNote'])}
+function setOnlineMethod(method){if(!['queue','code'].includes(method))return;selectedOnlineMethod=method;renderOnlineControls();ol(onlineCopy()[method==='queue'?'quickNote':'readyNote'])}
+function makeRoomCode(){const code=String(Math.floor(10000+Math.random()*90000));$('rc').value=code;ol(onlineCopy().madeCode.replace('CODE',code));return code}
+function setMatchmakingStatus(message,state='offline'){
+ const el=$('matchmakingCenterStatus');if(!el)return;el.textContent='CENTRAL MATCHMAKING CENTER · '+message;el.dataset.state=state;
+}
+function ensureSocketIoClient(){
+ if(window.io)return Promise.resolve();
+ return new Promise((resolve,reject)=>{
+  const existing=document.querySelector('script[data-matchmaking-socketio]');
+  if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',()=>reject(new Error('Could not load Socket.IO client.')),{once:true});return}
+  const script=document.createElement('script');script.src='https://cdn.socket.io/4.8.1/socket.io.min.js';script.dataset.matchmakingSocketio='1';
+  script.onload=resolve;script.onerror=()=>reject(new Error('Could not load Socket.IO client.'));document.head.appendChild(script);
+ });
+}
+async function connectCentralMatchmaking(){
+ if(!MATCHMAKER_URL||MATCHMAKER_URL.includes('YOUR-MATCHMAKER'))throw new Error('Central matchmaking URL is not configured. Deploy the matchmaking-server folder and set MATCHMAKER_URL in index.html.');
+ if(matchmakingSocket&&matchmakingSocket.connected)return matchmakingSocket;
+ if(matchmakingConnectPromise)return matchmakingConnectPromise;
+ matchmakingConnectPromise=(async()=>{
+  await ensureSocketIoClient();
+  const socket=window.io(MATCHMAKER_URL,{transports:['websocket','polling'],timeout:10000,reconnection:true});
+  matchmakingSocket=socket;
+  socket.on('connect',()=>setMatchmakingStatus('CONNECTED · READY TO FIND PLAYERS','online'));
+  socket.on('disconnect',()=>{if(matchmakingQueueActive)setMatchmakingStatus('CONNECTION LOST · TRYING TO RECONNECT','error');else setMatchmakingStatus('DISCONNECTED','offline')});
+  socket.on('queue:joined',data=>setMatchmakingStatus('SEARCHING '+data.mode+' · '+data.waiting+'/'+data.needed+' PLAYERS','searching'));
+  socket.on('queue:error',data=>{matchmakingQueueActive=false;waiting=false;queuedMatch=null;activeCentralMatchId=null;const btn=$('quickQueueStart');if(btn)btn.textContent=onlineCopy().find;setMatchmakingStatus('ERROR · '+(data&&data.message||'Queue error'),'error');ol((data&&data.message)||'Matchmaking queue error.')});
+  socket.on('queue:left',()=>setMatchmakingStatus('QUEUE CANCELLED','offline'));
+  socket.on('queue:expired',data=>{matchmakingQueueActive=false;waiting=false;queuedMatch=null;activeCentralMatchId=null;const btn=$('quickQueueStart');if(btn)btn.textContent=onlineCopy().find;setMatchmakingStatus('QUEUE EXPIRED','error');ol((data&&data.message)||'Queue expired. Try again.')});
+  socket.on('match:found',data=>handleCentralMatchFound(data));
+  socket.on('match:ready',data=>handleCentralMatchReady(data));
+  socket.on('match:cancelled',data=>{if(data&&data.matchId&&(data.matchId===activeCentralMatchId||(queuedMatch&&data.matchId===queuedMatch.matchId))){queuedMatch=null;activeCentralMatchId=null;waiting=false;matchmakingQueueActive=false;const b=$('quickQueueStart');if(b)b.textContent=onlineCopy().find;setMatchmakingStatus('MATCH CANCELLED','error');ol((data.reason)||'Match cancelled. Try again.')}});
+  await new Promise((resolve,reject)=>{
+   let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Connection timed out. Check that the matchmaking server is deployed and awake.'))},12000);
+   socket.once('connect',()=>{if(done)return;done=true;clearTimeout(timer);resolve()});
+   socket.once('connect_error',err=>{if(done)return;done=true;clearTimeout(timer);reject(new Error(err&&err.message?err.message:'Cannot connect to central matchmaking server.'))});
+  });
+  return socket;
+ })();
+ try{return await matchmakingConnectPromise}catch(e){if(matchmakingSocket){try{matchmakingSocket.disconnect()}catch(_){}matchmakingSocket=null}throw e}finally{matchmakingConnectPromise=null}
+}
+async function startCentralQueue(){
+ if(matchmakingQueueActive){if(matchmakingSocket)matchmakingSocket.emit('queue:leave');if(queuedMatch&&matchmakingSocket)matchmakingSocket.emit('match:cancel',{matchId:queuedMatch.matchId});matchmakingQueueActive=false;queuedMatch=null;activeCentralMatchId=null;waiting=false;const b=$('quickQueueStart');if(b)b.textContent=onlineCopy().find;setMatchmakingStatus('QUEUE CANCELLED','offline');ol('Vyhledávání hry bylo zrušeno.');return}
+ if(!name)return ol('Nejdřív se přihlas.');
+ cleanupTransport();queuedMatch=null;setMatchmakingStatus('CONNECTING TO CENTRAL SERVER…','searching');ol('Připojuji se k centrálnímu matchmakingu…');
+ try{
+  const socket=await connectCentralMatchmaking();
+  matchmakingQueueActive=true;waiting=true;
+  const b=$('quickQueueStart');if(b)b.textContent=currentLanguage==='en'?'✕ CANCEL SEARCH':currentLanguage==='fr'?'✕ ANNULER':'✕ ZRUŠIT HLEDÁNÍ';
+  setMatchmakingStatus('SEARCHING '+selectedOnlineMode+' · WAITING FOR PLAYERS','searching');
+  socket.emit('queue:join',{mode:selectedOnlineMode,name:String(name).slice(0,22)});
+ }catch(e){matchmakingQueueActive=false;waiting=false;setMatchmakingStatus('NOT CONNECTED · SERVER SETUP REQUIRED','error');ol('Centrální matchmaking není dostupný: '+e.message)}
+}
+function handleCentralMatchFound(data){
+ if(!data||!data.matchId)return;
+ matchmakingQueueActive=false;waiting=true;queuedMatch=data;activeCentralMatchId=data.matchId;
+ const b=$('quickQueueStart');if(b)b.textContent=onlineCopy().find;
+ if(data.mode!=='1v1'){
+  waiting=false;queuedMatch=null;activeCentralMatchId=null;
+  setMatchmakingStatus('GROUP FOUND · '+data.mode+' · '+((data.players&&data.players.length)||0)+' PLAYERS','error');
+  ol('Centrální matchmaking našel kompletní skupinu pro '+data.mode+'. Tato verze hry ale ještě neumí spustit týmový zápas se 3–4 hráči; týmová synchronizace hry je potřeba doplnit. Zvol 1v1 pro okamžité hraní.');
+  matchmakingSocket?.emit('match:complete',{matchId:data.matchId});
+  return;
+ }
+ $('rc').value=data.roomCode;
+ setMatchmakingStatus('MATCH FOUND · ROOM '+data.roomCode+' · CONNECTING','searching');
+ if(data.role==='host'){
+  ol('Soupeř nalezen! Připravuji centrálně přiřazenou místnost '+data.roomCode+'…');
+  goOnline({code:data.roomCode,role:'host',central:true,matchId:data.matchId});
+ }else{
+  ol('Soupeř nalezen! Čekám na potvrzení hostitele…');
+ }
+}
+function handleCentralMatchReady(data){
+ if(!data||!queuedMatch||data.matchId!==queuedMatch.matchId)return;
+ if(queuedMatch.mode!=='1v1')return;
+ if(queuedMatch.role==='guest'){
+  const match=queuedMatch;queuedMatch=null;$('rc').value=match.roomCode;
+  setMatchmakingStatus('HOST READY · CONNECTING TO ROOM '+match.roomCode,'searching');
+  ol('Místnost nalezena. Připojuji tě k náhodnému soupeři…');
+  goOnline({code:match.roomCode,role:'guest',hostId:data.hostPeerId,central:true,matchId:match.matchId});
+ }else if(queuedMatch.role==='host'){
+  queuedMatch=null;setMatchmakingStatus('MATCH READY · ROOM '+data.roomCode,'online');
+ }
+}
+function startRoom(action){if(selectedOnlineMode!=='1v1'){ol(onlineCopy().teamNote);return}if(action==='create'){makeRoomCode();goOnline();return}const code=String($('rc').value||'').replace(/\D/g,'').slice(0,5);$('rc').value=code;if(code.length!==5){ol(onlineCopy().needCode);$('rc').focus();return}goOnline()}
+document.querySelectorAll('[data-online-mode]').forEach(b=>b.addEventListener('click',()=>setOnlineMode(b.dataset.onlineMode)));
+$('quickQueueTab').addEventListener('click',()=>setOnlineMethod('queue'));$('roomCodeTab').addEventListener('click',()=>setOnlineMethod('code'));$('generateRoomCode').addEventListener('click',()=>{playSfx('ui');makeRoomCode();setOnlineMethod('code')});$('createOnlineRoomBtn').addEventListener('click',()=>{playSfx('ui');startRoom('create')});$('joinOnlineRoomBtn').addEventListener('click',()=>{playSfx('ui');startRoom('join')});$('quickQueueStart').addEventListener('click',()=>{playSfx('ui');startCentralQueue()});$('rc').addEventListener('input',()=>{$('rc').value=$('rc').value.replace(/\D/g,'').slice(0,5)});
+try{const savedMode=localStorage.getItem('mr_online_mode');if(['1v1','1v2','2v2'].includes(savedMode))selectedOnlineMode=savedMode}catch(e){}
 function setControlMode(mode){controlMode=mode==='mobile'?'mobile':'pc';try{localStorage.setItem('mr_control_mode',controlMode)}catch(e){};const pc=$('choosePC'),mob=$('chooseMobile');if(pc){pc.classList.toggle('selected',controlMode==='pc');pc.setAttribute('aria-pressed',String(controlMode==='pc'))}if(mob){mob.classList.toggle('selected',controlMode==='mobile');mob.setAttribute('aria-pressed',String(controlMode==='mobile'))}const lpc=$('lobbyChoosePC'),lmob=$('lobbyChooseMobile');if(lpc)lpc.classList.toggle('selected',controlMode==='pc');if(lmob)lmob.classList.toggle('selected',controlMode==='mobile');rs();syncMobileControls()}
 function syncMobileControls(){const active=controlMode==='mobile'&&playing&&!paused&&!over;$('mobileControls').hidden=!active;document.body.classList.toggle('mobile-playing',active);if(!active){K[keybinds.up]=K[keybinds.down]=K[keybinds.left]=K[keybinds.right]=0;md=false;resetStick()}}
 $('choosePC').onclick=()=>setControlMode('pc');$('chooseMobile').onclick=()=>setControlMode('mobile');$('lobbyChoosePC').onclick=()=>setControlMode('pc');$('lobbyChooseMobile').onclick=()=>setControlMode('mobile');
@@ -1576,11 +1730,11 @@ function resetStick(){const knob=$('stickKnob');if(knob){knob.style.transform='t
 (function setupTouchControls(){const stick=$('moveStick'),knob=$('stickKnob'),aim=$('aimPad');if(!stick||!knob||!aim)return;let stickId=null,originX=0,originY=0;const dead=13,max=43;function updateStick(e){const dx=e.clientX-originX,dy=e.clientY-originY,len=Math.hypot(dx,dy),scale=len>max?max/len:1,x=dx*scale,y=dy*scale;knob.style.transform=`translate(${x}px,${y}px)`;K[keybinds.left]=x < -dead?1:0;K[keybinds.right]=x > dead?1:0;K[keybinds.up]=y < -dead?1:0;K[keybinds.down]=y > dead?1:0}stick.addEventListener('pointerdown',e=>{if(controlMode!=='mobile'||!playing||paused)return;e.preventDefault();stickId=e.pointerId;const r=stick.getBoundingClientRect();originX=r.left+r.width/2;originY=r.top+r.height/2;stick.setPointerCapture(e.pointerId);updateStick(e)});stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId){e.preventDefault();updateStick(e)}});function endStick(e){if(e.pointerId!==stickId)return;stickId=null;resetStick()}stick.addEventListener('pointerup',endStick);stick.addEventListener('pointercancel',endStick);aim.addEventListener('pointerdown',e=>{if(controlMode!=='mobile'||!playing||paused)return;e.preventDefault();aim.setPointerCapture(e.pointerId);mx=e.clientX;my=e.clientY;if(editingMode){selectEditCellAtMouse(P);editDrag=true}else md=true});aim.addEventListener('pointermove',e=>{if(!aim.hasPointerCapture(e.pointerId))return;e.preventDefault();mx=e.clientX;my=e.clientY;if(editingMode&&editDrag)selectEditCellAtMouse(P)});function endAim(){md=false;editDrag=false}aim.addEventListener('pointerup',endAim);aim.addEventListener('pointercancel',endAim);document.querySelectorAll('.touch-actions button').forEach(btn=>{const action=btn.dataset.action;btn.addEventListener('pointerdown',e=>{e.preventDefault();if(controlMode!=='mobile'||!playing||paused)return;try{switch(action){case'wall':build(P);break;case'edit':toggleEdit(P);break;case'rifle':P.w='rifle';cancelUse(P,'Použití zrušeno');break;case'shotgun':P.w='shotgun';cancelUse(P,'Použití zrušeno');break;case'reload':startReload(P);break;case'shield':useShield(P);break;case'fish':useFish(P);break;case'pause':openPause();break}}catch(err){console.warn('Touch action:',err)}})})})();
 function lobby(msg){$('wardrobe').hidden=true;$('loadout').hidden=true;$('pause').hidden=true;$('sl').hidden=true;$('sb').hidden=false;$('hi').textContent=tr('hello')+name+'!';
  $('st').textContent=tr('wins')+': '+stats.w+' · '+tr('losses')+': '+stats.l;$('rs').textContent=msg||'';$('ui').hidden=false;
- applyLanguage();$('bn').innerHTML=tr('connect')+' <span>➜</span>';updateFortniteNav();syncMobileControls()}
+ applyLanguage();updateFortniteNav();syncMobileControls()}
 function login(){const v=$('nm').value.trim();if(v.length<4){$('loginHint').textContent=tr('nameError');$('nm').focus();return}name=v;$('loginHint').textContent='';save();playSfx('ui');lobby()}
 $('bl').onclick=login;$('nm').onkeydown=e=>{if(e.key==='Enter')login()};
 $('bo').onclick=()=>{cleanupTransport();name='';try{localStorage.removeItem('mr_name')}catch(e){}$('sb').hidden=true;$('sl').hidden=false;$('nm').value=''};
-$('bb').onclick=()=>{cleanupTransport();playSfx('ui');begin('bot')};$('bn').onclick=()=>{playSfx('ui');goOnline()};
+$('bb').onclick=()=>{cleanupTransport();playSfx('ui');begin('bot')};$('bn').onclick=()=>{playSfx('ui');startRoom('join')};
 $('wardrobeOpen').onclick=()=>{renderWardrobe();$('loadout').hidden=true;$('ui').hidden=true;$('wardrobe').hidden=false};
 $('wardrobeBack').onclick=()=>{$('wardrobe').hidden=true;$('loadout').hidden=true;$('ui').hidden=false;updateFortniteNav()};
 $('wardrobeRandom').onclick=()=>{const pick=list=>{const choices=list.filter((x,i)=>canUnlockIndex(gate(list,i)));return choices[Math.floor(Math.random()*choices.length)]||list[0]};selectedSkin=pick(SKINS).color;selectedAccent=pick(ACCENTS).color;selectedStyle=pick(SKIN_STYLES).id;selectedHat=pick(HATS).id;selectedBackbling=pick(BACKBLINGS).id;selectedFace=pick(FACES).id;selectedEmote=pick(EMOTES).id;selectedRifleSkin=pick(RIFLE_SKINS).id;selectedShotgunSkin=pick(SHOTGUN_SKINS).id;selectedShieldSkin=pick(SHIELD_SKINS).id;selectedFishSkin=pick(FISH_SKINS).id;saveLook();playSfx('equip')};
@@ -1606,9 +1760,9 @@ function closePause(){waitingBind=null;paused=false;$('pause').hidden=true;K={};
 function resetSettings(){keybinds={...defaultBinds};waitingBind=null;try{localStorage.setItem('mr_keybinds',JSON.stringify(keybinds))}catch(e){}renderBinds();$('bindHint').textContent='Výchozí klávesy byly obnoveny.'}
 
 const I18N={
- cs:{language:'🌐 JAZYK',hero:'POSTAV. BOJUJ. VYHRAJ.',enter:'VSTOUPIT DO ARENY',loginPlaceholder:'Zvol přezdívku (4–14 znaků)',loginHint:'Přezdívka musí mít alespoň 4 znaky.',callout1:'TVŮJ FIGHT.',callout2:'TVŮJ STYL.',callout3:'Stavěj • Bojuj • Vyhrávej',loginFooter:'✦ TVŮJ SVĚT. TVOJE PRAVIDLA. ✦',tagline:'Vyber režim a jdeme na to.',hello:'Ahoj, ',wins:'Výhry',losses:'Prohry',practice:'Tréninková aréna',practiceCopy:'Procvič si stavění, editování i míření proti botovi.',difficulty:'OBTÍŽNOST SOUPEŘE',bot:'🤖 HRÁT PROTI BOTOVI',wardrobe:'🎨 ŠATNA A VZHLED POSTAVY',signout:'Odhlásit se',online:'Online 1v1',onlineCopy:'Pozvi kamaráda, zadejte stejný kód a rozhodněte to v aréně.',roomLabel:'KÓD MÍSTNOSTI',roomPlaceholder:'Např. duo-1234',connect:'🌐 PŘIPOJIT / VYTVOŘIT MÍSTNOST',onlineTip:'Online hraní vyžaduje internet a stránku dostupnou přes HTTPS. Sdílej odkaz na hru a kód místnosti.',perf:'⚡ Režim výkonu',perfCopy:'Pro slabší počítače · méně efektů, stabilnější FPS',on:'Zapnuto',off:'Vypnuto',lockerTitle:'Šatna / Locker',lockerSub:'Základní výbava je zdarma. Skiny postav, zbraní, štítů a ryb vyžadují 50+ získaných výher; speciální sety najdeš v obchodě.',heads:['⚡ Rychlé outfity','🎨 Barva skina','🔫 Skiny zbraní','✨ Styl malování','💠 Barva detailů / akcentů','🎒 Batoh a záda','🧢 Pokrývka hlavy','🙂 Obličej','💥 Emote / smajlík (klávesa V)'],random:'🎲 Náhodný skin',resetLook:'↺ Výchozí vzhled',back:'Zpět do hlavního menu',pause:'Pauza a nastavení',pauseSub:'V online hře soupeř pokračuje i během nastavení.',resume:'Pokračovat ve hře',fps:'MAX FPS VE FIGHTU',quality:'Kvalita – hezčí grafika',performance:'Výkon – slabší PC',sound:'ZVUKOVÉ EFEKTY',soundHint:'Krátké zvuky střelby, zásahu, stavění, přebíjení a předmětů.',keys:'Klávesy',bindHint:'Klikni na tlačítko u akce a potom stiskni novou klávesu. Escape zruší přiřazování nebo zavře nastavení.',resetKeys:'↺ Obnovit původní klávesy',leave:'Odpojit a do hlavního menu',nameError:'Přezdívka musí mít alespoň 4 znaky.',rifle:'PUŠKA',shotgun:'BROKOVNICE',shield:'ŠTÍT',fish:'RYBA'},
- en:{language:'🌐 LANGUAGE',hero:'BUILD. FIGHT. WIN.',enter:'ENTER THE ARENA',loginPlaceholder:'Choose a name (4–14 characters)',loginHint:'Your name must have at least 4 characters.',callout1:'YOUR FIGHT.',callout2:'YOUR STYLE.',callout3:'Build • Fight • Win',loginFooter:'✦ YOUR WORLD. YOUR RULES. ✦',tagline:'Choose a mode and jump in.',hello:'Hey, ',wins:'Wins',losses:'Losses',practice:'Practice Arena',practiceCopy:'Practice building, editing and aim against a bot.',difficulty:'BOT DIFFICULTY',bot:'🤖 PLAY AGAINST BOT',wardrobe:'🎨 LOCKER & CHARACTER STYLE',signout:'Sign out',online:'Online 1v1',onlineCopy:'Invite a friend, enter the same room code, and settle it in the arena.',roomLabel:'ROOM CODE',roomPlaceholder:'e.g. duo-1234',connect:'🌐 JOIN / CREATE ROOM',onlineTip:'Online play needs internet and an HTTPS-hosted page. Share the game link and room code.',perf:'⚡ Performance mode',perfCopy:'For low-end PCs · fewer effects, steadier FPS',on:'On',off:'Off',lockerTitle:'Locker / Customization',lockerSub:'Starter gear is free. Character, weapon, shield and fish skins require 50+ earned wins; special sets are in the Shop.',heads:['⚡ Quick outfits','🎨 Skin color','🔫 Weapon skins','✨ Paint style','💠 Accent color','🎒 Back bling','🧢 Headwear','🙂 Face','💥 Emote (V key)'],random:'🎲 Random skin',resetLook:'↺ Default look',back:'Back to main menu',pause:'Pause & Settings',pauseSub:'In online matches, your opponent keeps playing while settings are open.',resume:'Resume game',fps:'MAX FIGHT FPS',quality:'Quality – better graphics',performance:'Performance – low-end PC',sound:'SOUND EFFECTS',soundHint:'Short sounds for shooting, hits, building, reloading and items.',keys:'Keybinds',bindHint:'Click an action button, then press a key. Escape cancels binding or closes settings.',resetKeys:'↺ Reset default keybinds',leave:'Disconnect & main menu',nameError:'Your name must have at least 4 characters.',rifle:'RIFLE',shotgun:'SHOTGUN',shield:'SHIELD',fish:'FISH'},
- fr:{language:'🌐 LANGUE',hero:'CONSTRUIS. COMBATS. GAGNES.',enter:'ENTRER DANS L’ARÈNE',loginPlaceholder:'Choisis un pseudo (4–14 caractères)',loginHint:'Ton pseudo doit contenir au moins 4 caractères.',callout1:'TON COMBAT.',callout2:'TON STYLE.',callout3:'Construis • Combats • Gagne',loginFooter:'✦ TON MONDE. TES RÈGLES. ✦',tagline:'Choisis un mode et lance-toi.',hello:'Salut, ',wins:'Victoires',losses:'Défaites',practice:'Arène d’entraînement',practiceCopy:'Entraîne-toi à construire, éditer et viser contre un bot.',difficulty:'DIFFICULTÉ DU BOT',bot:'🤖 JOUER CONTRE UN BOT',wardrobe:'🎨 CASIER & STYLE DU PERSONNAGE',signout:'Se déconnecter',online:'Duel en ligne 1v1',onlineCopy:'Invite un ami, entrez le même code et réglez ça dans l’arène.',roomLabel:'CODE DE SALLE',roomPlaceholder:'ex. duo-1234',connect:'🌐 REJOINDRE / CRÉER UNE SALLE',onlineTip:'Le jeu en ligne nécessite Internet et une page hébergée en HTTPS. Partage le lien et le code.',perf:'⚡ Mode performance',perfCopy:'Pour les PC modestes · moins d’effets, FPS plus stables',on:'Activé',off:'Désactivé',lockerTitle:'Casier / Personnalisation',lockerSub:'L’équipement de départ est gratuit. Les skins de personnage, armes, boucliers et poissons nécessitent au moins 50 victoires ; les ensembles spéciaux sont dans la boutique.',heads:['⚡ Tenues rapides','🎨 Couleur du skin','🔫 Skins d’armes','✨ Style de peinture','💠 Couleur des détails','🎒 Accessoire dorsal','🧢 Couvre-chef','🙂 Visage','💥 Emote (touche V)'],random:'🎲 Skin aléatoire',resetLook:'↺ Apparence par défaut',back:'Retour au menu principal',pause:'Pause et paramètres',pauseSub:'En ligne, ton adversaire continue de jouer pendant les réglages.',resume:'Reprendre la partie',fps:'FPS MAX EN COMBAT',quality:'Qualité – meilleurs graphismes',performance:'Performance – PC modeste',sound:'EFFETS SONORES',soundHint:'Sons courts pour les tirs, impacts, constructions, rechargements et objets.',keys:'Touches',bindHint:'Clique sur une action puis appuie sur une touche. Échap annule ou ferme les réglages.',resetKeys:'↺ Réinitialiser les touches',leave:'Quitter et revenir au menu',nameError:'Ton pseudo doit contenir au moins 4 caractères.',rifle:'FUSIL',shotgun:'FUSIL À POMPE',shield:'BOUCLIER',fish:'POISSON'}
+ cs:{language:'🌐 JAZYK',hero:'POSTAV. BOJUJ. VYHRAJ.',enter:'VSTOUPIT DO ARENY',loginPlaceholder:'Zvol přezdívku (4–14 znaků)',loginHint:'Přezdívka musí mít alespoň 4 znaky.',callout1:'TVŮJ FIGHT.',callout2:'TVŮJ STYL.',callout3:'Stavěj • Bojuj • Vyhrávej',loginFooter:'✦ TVŮJ SVĚT. TVOJE PRAVIDLA. ✦',tagline:'Vyber režim a jdeme na to.',hello:'Ahoj, ',wins:'Výhry',losses:'Prohry',practice:'Tréninková aréna',practiceCopy:'Procvič si stavění, editování i míření proti botovi.',difficulty:'OBTÍŽNOST SOUPEŘE',bot:'🤖 HRÁT PROTI BOTOVI',wardrobe:'🎨 ŠATNA A VZHLED POSTAVY',signout:'Odhlásit se',online:'Online Multiplayer',onlineCopy:'Vyber týmový režim a najdi soupeře přes rychlou frontu nebo pětičíselný kód místnosti.',roomLabel:'KÓD MÍSTNOSTI',roomPlaceholder:'Např. duo-1234',connect:'🌐 PŘIPOJIT / VYTVOŘIT MÍSTNOST',onlineTip:'Online hraní vyžaduje internet a stránku dostupnou přes HTTPS. Sdílej odkaz na hru a kód místnosti.',perf:'⚡ Režim výkonu',perfCopy:'Pro slabší počítače · méně efektů, stabilnější FPS',on:'Zapnuto',off:'Vypnuto',lockerTitle:'Šatna / Locker',lockerSub:'Od každé kategorie máš dva kousky zdarma. Ostatní skiny začínají na 5 winech a cena se vždy zvyšuje o 5; rychlé outfity stojí jako jejich nejdražší část. Verity a Lovity zůstávají bundly za 250 winů.',heads:['⚡ Rychlé outfity','🎨 Barva skina','🔫 Skiny zbraní','✨ Styl malování','💠 Barva detailů / akcentů','🎒 Batoh a záda','🧢 Pokrývka hlavy','🙂 Obličej','💥 Emote / smajlík (klávesa V)'],random:'🎲 Náhodný skin',resetLook:'↺ Výchozí vzhled',back:'Zpět do hlavního menu',pause:'Pauza a nastavení',pauseSub:'V online hře soupeř pokračuje i během nastavení.',resume:'Pokračovat ve hře',fps:'MAX FPS VE FIGHTU',quality:'Kvalita – hezčí grafika',performance:'Výkon – slabší PC',sound:'ZVUKOVÉ EFEKTY',soundHint:'Krátké zvuky střelby, zásahu, stavění, přebíjení a předmětů.',keys:'Klávesy',bindHint:'Klikni na tlačítko u akce a potom stiskni novou klávesu. Escape zruší přiřazování nebo zavře nastavení.',resetKeys:'↺ Obnovit původní klávesy',leave:'Odpojit a do hlavního menu',nameError:'Přezdívka musí mít alespoň 4 znaky.',rifle:'PUŠKA',shotgun:'BROKOVNICE',shield:'ŠTÍT',fish:'RYBA'},
+ en:{language:'🌐 LANGUAGE',hero:'BUILD. FIGHT. WIN.',enter:'ENTER THE ARENA',loginPlaceholder:'Choose a name (4–14 characters)',loginHint:'Your name must have at least 4 characters.',callout1:'YOUR FIGHT.',callout2:'YOUR STYLE.',callout3:'Build • Fight • Win',loginFooter:'✦ YOUR WORLD. YOUR RULES. ✦',tagline:'Choose a mode and jump in.',hello:'Hey, ',wins:'Wins',losses:'Losses',practice:'Practice Arena',practiceCopy:'Practice building, editing and aim against a bot.',difficulty:'BOT DIFFICULTY',bot:'🤖 PLAY AGAINST BOT',wardrobe:'🎨 LOCKER & CHARACTER STYLE',signout:'Sign out',online:'Online Multiplayer',onlineCopy:'Choose a team mode and find opponents through Quick Queue or a five-digit room code.',roomLabel:'ROOM CODE',roomPlaceholder:'e.g. duo-1234',connect:'🌐 JOIN / CREATE ROOM',onlineTip:'Online play needs internet and an HTTPS-hosted page. Share the game link and room code.',perf:'⚡ Performance mode',perfCopy:'For low-end PCs · fewer effects, steadier FPS',on:'On',off:'Off',lockerTitle:'Locker / Customization',lockerSub:'Two choices in every category are free. Other skins start at 5 wins and rise by 5; quick outfits use the cost of their priciest piece. Verity and Lovity stay 250-win Shop bundles.',heads:['⚡ Quick outfits','🎨 Skin color','🔫 Weapon skins','✨ Paint style','💠 Accent color','🎒 Back bling','🧢 Headwear','🙂 Face','💥 Emote (V key)'],random:'🎲 Random skin',resetLook:'↺ Default look',back:'Back to main menu',pause:'Pause & Settings',pauseSub:'In online matches, your opponent keeps playing while settings are open.',resume:'Resume game',fps:'MAX FIGHT FPS',quality:'Quality – better graphics',performance:'Performance – low-end PC',sound:'SOUND EFFECTS',soundHint:'Short sounds for shooting, hits, building, reloading and items.',keys:'Keybinds',bindHint:'Click an action button, then press a key. Escape cancels binding or closes settings.',resetKeys:'↺ Reset default keybinds',leave:'Disconnect & main menu',nameError:'Your name must have at least 4 characters.',rifle:'RIFLE',shotgun:'SHOTGUN',shield:'SHIELD',fish:'FISH'},
+ fr:{language:'🌐 LANGUE',hero:'CONSTRUIS. COMBATS. GAGNES.',enter:'ENTRER DANS L’ARÈNE',loginPlaceholder:'Choisis un pseudo (4–14 caractères)',loginHint:'Ton pseudo doit contenir au moins 4 caractères.',callout1:'TON COMBAT.',callout2:'TON STYLE.',callout3:'Construis • Combats • Gagne',loginFooter:'✦ TON MONDE. TES RÈGLES. ✦',tagline:'Choisis un mode et lance-toi.',hello:'Salut, ',wins:'Victoires',losses:'Défaites',practice:'Arène d’entraînement',practiceCopy:'Entraîne-toi à construire, éditer et viser contre un bot.',difficulty:'DIFFICULTÉ DU BOT',bot:'🤖 JOUER CONTRE UN BOT',wardrobe:'🎨 CASIER & STYLE DU PERSONNAGE',signout:'Se déconnecter',online:'Multijoueur en ligne',onlineCopy:'Choisis un mode et trouve des adversaires via la file rapide ou un code de salle à cinq chiffres.',roomLabel:'CODE DE SALLE',roomPlaceholder:'ex. duo-1234',connect:'🌐 REJOINDRE / CRÉER UNE SALLE',onlineTip:'Le jeu en ligne nécessite Internet et une page hébergée en HTTPS. Partage le lien et le code.',perf:'⚡ Mode performance',perfCopy:'Pour les PC modestes · moins d’effets, FPS plus stables',on:'Activé',off:'Désactivé',lockerTitle:'Casier / Personnalisation',lockerSub:'Deux choix de chaque catégorie sont gratuits. Les autres skins commencent à 5 victoires et augmentent de 5 ; les tenues rapides coûtent comme leur pièce la plus chère. Verity et Lovity restent des bundles à 250 victoires.',heads:['⚡ Tenues rapides','🎨 Couleur du skin','🔫 Skins d’armes','✨ Style de peinture','💠 Couleur des détails','🎒 Accessoire dorsal','🧢 Couvre-chef','🙂 Visage','💥 Emote (touche V)'],random:'🎲 Skin aléatoire',resetLook:'↺ Apparence par défaut',back:'Retour au menu principal',pause:'Pause et paramètres',pauseSub:'En ligne, ton adversaire continue de jouer pendant les réglages.',resume:'Reprendre la partie',fps:'FPS MAX EN COMBAT',quality:'Qualité – meilleurs graphismes',performance:'Performance – PC modeste',sound:'EFFETS SONORES',soundHint:'Sons courts pour les tirs, impacts, constructions, rechargements et objets.',keys:'Touches',bindHint:'Clique sur une action puis appuie sur une touche. Échap annule ou ferme les réglages.',resetKeys:'↺ Réinitialiser les touches',leave:'Quitter et revenir au menu',nameError:'Ton pseudo doit contenir au moins 4 caractères.',rifle:'FUSIL',shotgun:'FUSIL À POMPE',shield:'BOUCLIER',fish:'POISSON'}
 };
 function tr(key){return (I18N[currentLanguage]&&I18N[currentLanguage][key])||I18N.cs[key]||key}
 function renderLanguagePickers(){
@@ -1625,7 +1779,7 @@ function applyLanguage(){const d=I18N[currentLanguage]||I18N.cs;document.documen
  $('nm').placeholder=d.loginPlaceholder;setText('#loginHint',d.loginHint);$('bl').innerHTML=d.enter+' <span>➜</span>';
  setText('#sb .lobby-tagline',d.tagline);$('hi').textContent=name?d.hello+name+'!':'';$('st').textContent=d.wins+': '+stats.w+' · '+d.losses+': '+stats.l;
  setText('.practice-panel h2',d.practice);setText('.practice-panel .panel-copy',d.practiceCopy);setText('label[for="difficulty"]',d.difficulty);setDifficultyLabels();$('bb').innerHTML=d.bot+' <span>➜</span>';$('wardrobeOpen').textContent=d.wardrobe;$('bo').textContent=d.signout;
- setText('.online-panel h2',d.online);setText('.online-panel .panel-copy',d.onlineCopy);setText('label[for="rc"]',d.roomLabel);$('rc').placeholder=d.roomPlaceholder;$('bn').innerHTML=d.connect+' <span>➜</span>';setText('.online-tip',d.onlineTip);
+ setText('.online-panel h2',d.online);setText('.online-panel .panel-copy',d.onlineCopy);$('rc').placeholder='12345';setText('.online-tip',d.onlineTip);renderOnlineControls();
  setText('.lobby-perf-row strong',d.perf);setText('.lobby-perf-row span',d.perfCopy);const pbt=$('lobbyPerfToggle');if(pbt)pbt.textContent=performanceMode?d.on:d.off;
  setText('#wardrobe .wardrobe-card h1',d.lockerTitle);setText('#wardrobe .wardrobe-card .subtitle',d.lockerSub);const hs=[...document.querySelectorAll('#wardrobe .wardrobe-card > h2')];d.heads.forEach((txt,i)=>{if(hs[i])hs[i].textContent=txt});$('wardrobeRandom').textContent=d.random;$('wardrobeReset').textContent=d.resetLook;$('wardrobeBack').textContent=d.back;
  setText('#pause .pause-card h1',d.pause);setText('#pause .pause-card .subtitle',d.pauseSub);$('resume').textContent=d.resume;setText('label[for="fightFpsSelect"]',d.fps);$('fightFpsSelect').options[0].textContent='60 FPS';$('fightFpsSelect').options[1].textContent='120 FPS';$('fightFpsSelect').options[2].textContent='240 FPS';setText('label[for="performanceModeSelect"]','⚡ '+(currentLanguage==='en'?'PERFORMANCE MODE':currentLanguage==='fr'?'MODE PERFORMANCE':'REŽIM VÝKONU'));$('performanceModeSelect').options[0].textContent=d.quality;$('performanceModeSelect').options[1].textContent=d.performance;setText('#soundLabel',d.sound);$('soundSelect').value=soundEnabled?'on':'off';$('soundSelect').options[0].textContent=currentLanguage==='en'?'🔊 On':currentLanguage==='fr'?'🔊 Activé':'🔊 Zapnuto';$('soundSelect').options[1].textContent=currentLanguage==='en'?'🔇 Off':currentLanguage==='fr'?'🔇 Désactivé':'🔇 Vypnuto';setText('#soundHint',d.soundHint);setText('#pause .pause-card h2',d.keys);setText('#pause .pause-card > .hint',d.pauseSub);$('resetSettings').textContent=d.resetKeys;$('leaveGame').textContent=d.leave;
@@ -1762,29 +1916,37 @@ function guestConnect(code,hostId){
  p.on('open',()=>{if(peer!==p)return;const c=p.connect(hostId,{reliable:true});attachConnection(c,'guest')});
  p.on('error',err=>{if(peer!==p)return;if(waiting)ol(err&&err.type==='peer-unavailable'?'Místnost nebyla nalezena. Nejdřív ji musí vytvořit soupeř.':'Online připojení selhalo. Zkontroluj internet a zkus to znovu.')});
 }
-async function goOnline(){
+async function goOnline(options={}){
  if(!name)return ol('Nejdřív se přihlas.');
- const code=($('rc').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,18).replace(/[^a-z0-9]+$/g,''))||'hra1';
- cleanupTransport();waiting=true;rcode=code;ol('Připojuji se k online službě…');
+ if(selectedOnlineMode!=='1v1')return ol(onlineCopy().teamNote);
+ const code=String((options&&options.code)||$('rc').value||'').replace(/\D/g,'').slice(0,5);
+ if(code.length!==5)return ol(onlineCopy().needCode);
+ $('rc').value=code;
+ cleanupTransport();waiting=true;rcode=code;ol(options.central?'Připravuji centrálně přiřazenou místnost…':'Připojuji se k online službě…');
  try{await ensurePeerJS()}catch(e){waiting=false;return ol('Online se nepodařilo načíst. Otevři hru s připojením k internetu.')}
- const hostId='boxfight2d-'+code;
+ const hostId=(options&&options.hostId)||('boxfight2d-'+code);
+ if(options&&options.role==='guest'){
+  guestConnect(code,hostId);
+  return;
+ }
  const candidate=new Peer(hostId);let settled=false;
- const timer=setTimeout(()=>{if(settled)return;settled=true;try{candidate.destroy()}catch(e){}if(peer===candidate)peer=null;waiting=false;ol('Server pro online spojení neodpovídá. Zkus to znovu.')},12000);
+ const timer=setTimeout(()=>{if(settled)return;settled=true;try{candidate.destroy()}catch(e){}if(peer===candidate)peer=null;waiting=false;if(options&&options.central&&matchmakingSocket)matchmakingSocket.emit('match:cancel',{matchId:options.matchId});ol('Server pro online spojení neodpovídá. Zkus to znovu.')},12000);
  candidate.on('open',()=>{
   if(settled){candidate.destroy();return}settled=true;clearTimeout(timer);peer=candidate;onlineRole='host';rcode=code;
-  ol('Místnost '+code+' je připravená. Pošli soupeři stejný kód a počkej na připojení…');
+  ol(options.central?'Soupeř nalezen. Čekám na jeho připojení…':'Místnost '+code+' je připravená. Pošli soupeři stejný kód a počkej na připojení…');
+  if(options.central&&matchmakingSocket)matchmakingSocket.emit('match:host-ready',{matchId:options.matchId,roomCode:code});
   candidate.on('connection',c=>{if(!waiting||playing||conn){c.close();return}attachConnection(c,'host')});
  });
  candidate.on('error',err=>{
   if(settled){if(peer===candidate&&waiting)ol('Online spojení má problém. Zkus obnovit stránku.');return}
-  if(err&&err.type==='unavailable-id'){settled=true;clearTimeout(timer);try{candidate.destroy()}catch(e){}if(peer===candidate)peer=null;guestConnect(code,hostId)}
-  else if(err&&err.type!=='network'){settled=true;clearTimeout(timer);waiting=false;ol('Nepodařilo se vytvořit online místnost. Zkus jiný kód.')}
+  if(err&&err.type==='unavailable-id'&&!(options&&options.role==='host')){settled=true;clearTimeout(timer);try{candidate.destroy()}catch(e){}if(peer===candidate)peer=null;guestConnect(code,hostId)}
+  else if(err&&err.type!=='network'){settled=true;clearTimeout(timer);waiting=false;if(options&&options.central&&matchmakingSocket)matchmakingSocket.emit('match:cancel',{matchId:options.matchId});ol(err&&err.type==='unavailable-id'?'Tento kód je právě obsazený. Zkus hledání znovu.':'Nepodařilo se vytvořit online místnost. Zkus jiný kód.')}
  });
 }
 function attachConnection(c,role){conn=c;
- c.on('open',()=>{if(conn!==c)return;if(role==='guest'){sendNet({type:'join',name});ol('Místnost nalezena, dokončuji připojení…')}else ol('Soupeř se připojuje…')});
+ c.on('open',()=>{if(conn!==c)return;if(activeCentralMatchId&&matchmakingSocket)matchmakingSocket.emit('match:peer-connected',{matchId:activeCentralMatchId});if(role==='guest'){sendNet({type:'join',name});ol('Místnost nalezena, dokončuji připojení…')}else ol('Soupeř se připojuje…')});
  c.on('data',msg=>{if(conn===c){lastHeard=performance.now();handleNetMessage(msg,role)}});
- c.on('close',()=>{if(conn!==c)return;conn=null;if(playing&&online()&&!over)finish(true,'Soupeř se odpojil – vyhrál jsi!',true);else if(waiting)ol('Soupeř se odpojil. Můžeš počkat na dalšího hráče nebo to zkusit znovu.')});
+ c.on('close',()=>{if(conn!==c)return;conn=null;if(activeCentralMatchId&&matchmakingSocket)matchmakingSocket.emit('match:cancel',{matchId:activeCentralMatchId});if(playing&&online()&&!over)finish(true,'Soupeř se odpojil – vyhrál jsi!',true);else if(waiting)ol('Soupeř se odpojil. Můžeš počkat na dalšího hráče nebo to zkusit znovu.')});
  c.on('error',()=>{if(conn===c&&waiting)ol('Chyba online spojení. Zkus znovu připojit.')});
 }
 function handleNetMessage(msg,role){if(!msg||typeof msg!=='object')return;
@@ -1809,6 +1971,9 @@ function recv(e){const d=e.d;
 function net(dt){if(!conn||!conn.open){gone+=dt;if(gone>3&&!over)finish(true,'Soupeř se odpojil – vyhrál jsi!',true);return}gone=0;const k=Math.min(1,dt*18);B.x+=(B.tx-B.x)*k;B.y+=(B.ty-B.y)*k}
 function beginOnline(side,opponentName){begin('online',{side,opponentName})}
 function leaveToLobby(){
+ if(matchmakingQueueActive&&matchmakingSocket)matchmakingSocket.emit('queue:leave');
+ if(activeCentralMatchId&&matchmakingSocket)matchmakingSocket.emit('match:cancel',{matchId:activeCentralMatchId});
+ matchmakingQueueActive=false;queuedMatch=null;activeCentralMatchId=null;const qb=$('quickQueueStart');if(qb)qb.textContent=onlineCopy().find;
  const wasOnline=playing&&online()&&!over;
  if(wasOnline){sendNet({type:'forfeit'});stats.l++;save()}
  playing=false;over=true;paused=false;md=false;K={};$('pause').hidden=true;cleanupTransport();lobby(wasOnline?'Odpojil ses z online hry. Soupeř vyhrál.':'Vrátil ses do hlavního menu.')
@@ -2002,7 +2167,7 @@ function showMatchResult(win,msg=''){
  const labels=currentLanguage==='cs'?{win:'VÍTĚZSTVÍ!',lose:'PROHRA',kicker:'ZÁPAS DOKONČEN',won:'Vyhrál jsi tento zápas.',lost:'Tentokrát jsi prohrál. Zkus to znovu!',wins:'VÝHRY',losses:'PROHRY',back:'ZPĚT DO LOBBY ➜'}:currentLanguage==='fr'?{win:'VICTOIRE !',lose:'DÉFAITE',kicker:'MATCH TERMINÉ',won:'Tu as gagné ce match.',lost:'Tu as perdu cette fois. Réessaie !',wins:'VICTOIRES',losses:'DÉFAITES',back:'RETOUR AU SALON ➜'}:{win:'VICTORY!',lose:'DEFEAT',kicker:'MATCH COMPLETE',won:'You won this match.',lost:'You lost this time. Try again!',wins:'WINS',losses:'LOSSES',back:'BACK TO LOBBY ➜'};
  screen.classList.toggle('is-defeat',!win);$('matchResultIcon').textContent=win?'🏆':'💔';$('matchResultKicker').textContent=labels.kicker;$('matchResultTitle').textContent=win?labels.win:labels.lose;$('matchResultMessage').textContent=msg|| (win?labels.won:labels.lost);$('matchResultWinsLabel').textContent=labels.wins;$('matchResultLossesLabel').textContent=labels.losses;$('matchResultWins').textContent=stats.w;$('matchResultLosses').textContent=stats.l;$('matchResultLobby').textContent=labels.back;screen.hidden=false;
 }
-function finish(win,msg='',fromNet=false){if(over)return;over=true;paused=false;$('pause').hidden=true;if(win){stats.w++;totalWins++;try{localStorage.setItem('mr_total_wins',String(totalWins))}catch(e){}}else stats.l++;save();const _bp=bpAward(win);playSfx(win?'victory':'defeat');if(online()&&!fromNet)sendNet({type:'result',win,msg});syncMobileControls();showMatchResult(win,msg);if(window.showBpGain)window.showBpGain(_bp)}
+function finish(win,msg='',fromNet=false){if(over)return;over=true;paused=false;if(online()&&activeCentralMatchId&&matchmakingSocket){matchmakingSocket.emit('match:complete',{matchId:activeCentralMatchId});activeCentralMatchId=null;queuedMatch=null;} $('pause').hidden=true;if(win){stats.w++;totalWins++;try{localStorage.setItem('mr_total_wins',String(totalWins))}catch(e){}}else stats.l++;save();const _bp=bpAward(win);playSfx(win?'victory':'defeat');if(online()&&!fromNet)sendNet({type:'result',win,msg});syncMobileControls();showMatchResult(win,msg);if(window.showBpGain)window.showBpGain(_bp)}
 $('matchResultLobby').onclick=()=>{playing=false;paused=false;over=true;$('matchResultScreen').hidden=true;cleanupTransport();lobby()};
 function upd(dt){if(paused&&!online())return;t+=dt;if(cdn>0)cdn-=dt;const go=cdn<=0;
  for(const e of[P,B]){if(e.use)tickUse(e,dt);e.cd-=dt;e.bc-=dt;e.hit-=dt;e.wood=Math.min(150,e.wood+dt);if(e.reload>0){e.reload=Math.max(0,e.reload-dt);if(e.reload===0)finishReload(e)}}
@@ -2188,7 +2353,7 @@ function renderWardrobe(){
  if(!sg||!hg||!st||!fa||!em||!ac||!bb||!pr||!rws||!sws||!shs||!fis)return;
  for(const el of [sg,hg,st,fa,em,ac,bb,pr,rws,sws,shs,fis])el.innerHTML='';
  const activePreset=OUTFIT_PRESETS.find(p=>p.skin===selectedSkin&&p.accent===selectedAccent&&p.style===selectedStyle&&p.hat===selectedHat&&p.backbling===selectedBackbling&&p.face===selectedFace&&p.emote===selectedEmote);
- for(let i=0;i<OUTFIT_PRESETS.length;i++){const preset=OUTFIT_PRESETS[i];const b=document.createElement('button');b.className='preset-choice'+(activePreset===preset?' selected':'');b.type='button';const top=document.createElement('span');top.className='preset-top';const ic=document.createElement('span');ic.className='preset-icon';ic.textContent=preset.icon;const nameEl=document.createElement('span');nameEl.textContent=preset.name;top.append(ic,nameEl);const meta=document.createElement('span');meta.className='preset-meta';meta.textContent=preset.tier+' OUTFIT';b.append(top,meta);const presetGate=preset.wins!=null?preset:i;lockBadge(b,presetGate);b.onclick=()=>applyOutfitPreset(preset,presetGate);pr.append(b)}
+ for(let i=0;i<OUTFIT_PRESETS.length;i++){const preset=OUTFIT_PRESETS[i];const b=document.createElement('button');b.className='preset-choice'+(activePreset===preset?' selected':'');b.type='button';const top=document.createElement('span');top.className='preset-top';const ic=document.createElement('span');ic.className='preset-icon';ic.textContent=preset.icon;const nameEl=document.createElement('span');nameEl.textContent=preset.name;top.append(ic,nameEl);const meta=document.createElement('span');meta.className='preset-meta';const outfitCost=Math.max(0,Number(preset.wins)||0);const costLabel=outfitCost===0?(currentLanguage==='cs'?'ZDARMA':currentLanguage==='fr'?'GRATUIT':'FREE'):(currentLanguage==='cs'?outfitCost+' WINŮ':currentLanguage==='fr'?outfitCost+' VICTOIRES':outfitCost+' WINS');meta.textContent=preset.tier+' · '+costLabel;b.append(top,meta);const presetGate=preset.wins!=null?preset:i;lockBadge(b,presetGate);b.onclick=()=>applyOutfitPreset(preset,presetGate);pr.append(b)}
  for(let i=0;i<SKINS.length;i++){const skin=SKINS[i];const b=document.createElement('button');b.className='skin-choice'+(selectedSkin===skin.color?' selected':'');b.type='button';const sw=document.createElement('span');sw.className='skin-swatch';sw.style.background=skin.color;sw.style.boxShadow='inset 0 2px 5px rgba(255,255,255,.25),0 0 0 2px '+selectedAccent+'55';const tx=document.createElement('span');tx.textContent=cosmeticName('skin',skin.name);const tier=document.createElement('span');tier.className='rarity-label';tier.textContent=skin.tier;b.append(sw,tx,tier);const uk=gate(SKINS,i);lockBadge(b,uk);b.onclick=()=>{if(!canUnlockIndex(uk))return lockedNotice(uk);selectedSkin=skin.color;saveLook();playSfx('equip')};sg.append(b)}
  for(let i=0;i<SKIN_STYLES.length;i++){const style=SKIN_STYLES[i];const b=document.createElement('button');b.className='hat-choice'+(selectedStyle===style.id?' selected':'');b.type='button';const ic=document.createElement('span');ic.className='style-icon';ic.textContent=style.icon;const tx=document.createElement('span');tx.textContent=cosmeticName('style',style.name);b.append(ic,tx);const uk=gate(SKIN_STYLES,i);lockBadge(b,uk);b.onclick=()=>{if(!canUnlockIndex(uk))return lockedNotice(uk);selectedStyle=style.id;saveLook();playSfx('equip')};st.append(b)}
  for(let i=0;i<ACCENTS.length;i++){const accent=ACCENTS[i];const b=document.createElement('button');b.className='skin-choice'+(selectedAccent===accent.color?' selected':'');b.type='button';const sw=document.createElement('span');sw.className='accent-swatch';sw.style.background=accent.color;const tx=document.createElement('span');tx.textContent=cosmeticName('accent',accent.name);b.append(sw,tx);const uk=gate(ACCENTS,i);lockBadge(b,uk);b.onclick=()=>{if(!canUnlockIndex(uk))return lockedNotice(uk);selectedAccent=accent.color;saveLook();playSfx('equip')};ac.append(b)}
@@ -2203,7 +2368,7 @@ function renderWardrobe(){
  renderSkinGrid(FISH_SKINS,fis,selectedFishSkin,id=>selectedFishSkin=id);
  selectedWeaponSkin=selectedRifleSkin;
  const chosen=SKINS.find(x=>x.color===selectedSkin),style=SKIN_STYLES.find(x=>x.id===selectedStyle),accent=ACCENTS.find(x=>x.color===selectedAccent),back=BACKBLINGS.find(x=>x.id===selectedBackbling),weapon=RIFLE_SKINS.find(x=>x.id===selectedRifleSkin),shotgun=SHOTGUN_SKINS.find(x=>x.id===selectedShotgunSkin),shield=SHIELD_SKINS.find(x=>x.id===selectedShieldSkin),fish=FISH_SKINS.find(x=>x.id===selectedFishSkin);
- const unlockText=currentLanguage==='en'?'Starter gear is free. Character, weapon, shield and fish skins require 50+ earned wins; special bundles are in the Shop.':currentLanguage==='fr'?'L’équipement de départ est gratuit. Les skins de personnage, armes, boucliers et poissons nécessitent au moins 50 victoires ; les ensembles spéciaux sont dans la boutique.':'Základní výbava je zdarma. Skiny postav, zbraní, štítů a ryb vyžadují 50+ získaných výher; speciální sety najdeš v obchodě.';
+ const unlockText=currentLanguage==='en'?'Two choices in every category are free. Other skins start at 5 wins and rise by 5; quick outfits use the cost of their priciest piece. Verity and Lovity stay 250-win Shop bundles.':currentLanguage==='fr'?'Deux choix de chaque catégorie sont gratuits. Les autres skins commencent à 5 victoires et augmentent de 5 ; les tenues rapides coûtent comme leur pièce la plus chère. Verity et Lovity restent des bundles à 250 victoires.':'Od každé kategorie máš dva kousky zdarma. Ostatní skiny začínají na 5 winech a cena se vždy zvyšuje o 5; rychlé outfity stojí jako jejich nejdražší část. Verity a Lovity zůstávají bundly za 250 winů.';
  $('wardrobeHint').textContent=unlockText+' '+(chosen?cosmeticName('skin',chosen.name):'Blue')+' / '+(style?cosmeticName('style',style.name):'Classic')+' / '+(back?cosmeticName('back',back.name):'Backpack')+' / Puška: '+(weapon?weapon.name:'Standard Issue')+' / Brokovnice: '+(shotgun?shotgun.name:'Pump Standard')+' / Štít: '+(shield?shield.name:'Blue Guard')+' / Ryba: '+(fish?fish.name:'Golden Flopper')+'.';
  const av=$('lockerAvatar');if(av){const hatPreview=HATS.find(x=>x.id===selectedHat),backPreview=BACKBLINGS.find(x=>x.id===selectedBackbling);av.textContent=(backPreview&&backPreview.id!=='none'?backPreview.icon+' ':'')+(hatPreview&&hatPreview.id!=='none'?hatPreview.icon:'')+selectedFace;av.style.setProperty('--locker-skin',selectedSkin);const bg=selectedStyle==='galaxy'?'radial-gradient(circle at 25% 20%,#f0abfc,transparent 35%),linear-gradient(145deg,#312e81,#111827)':selectedStyle==='neon'?'linear-gradient(145deg,'+selectedAccent+','+selectedSkin+',#111827)':selectedStyle==='chrome'?'linear-gradient(130deg,#fff,#7f8ea3,#e2e8f0,#4b5563)':selectedStyle==='frost'?'linear-gradient(145deg,#effaff,#7dd3fc,#1e3a5f)':selectedStyle==='void'?'radial-gradient(circle at 50% 45%,'+selectedAccent+' 0,transparent 30%),linear-gradient(145deg,#080814,#21143f)':`linear-gradient(145deg,${selectedSkin},#172441)`;av.style.background=bg;av.style.borderColor=selectedAccent;av.style.boxShadow=selectedStyle==='neon'?'0 0 22px '+selectedAccent:'0 7px 20px rgba(0,0,0,.3)';av.style.textShadow='0 2px 8px '+selectedAccent}
  const summary=$('lockerSummary');if(summary)summary.textContent=(chosen?cosmeticName('skin',chosen.name):'Blue')+' · '+(style?cosmeticName('style',style.name):'Classic')+' · '+(weapon?weapon.name:'Standard Issue');
@@ -2574,38 +2739,36 @@ enforceCosmeticUnlocks();setPerformanceMode(performanceMode,false);renderLanguag
   fish_lovity:{vb:'-40 -28 80 56',layers:[['M-22 0 L-37 -14 L-32 0 L-37 14 Z','d','a',1.4],['M-23 0 Q-12 -17 6 -13 Q25 -9 29 0 Q24 10 7 13 Q-12 16 -23 0 Z','c','a',1.6],['M-5 -12 L-2 -23 L5 -12 Z','d','a',1.2],['M-4 12 L4 23 L10 11 Z','d','a',1.2],['M1 -1 C-6 -8 -12 0 1 8 C14 0 8 -8 1 -1 Z','a','w',1.1],['M13 -4 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0','w','a',1]]}
  });
 
- // Give every selectable avatar/gear skin (apart from the starter item) a 50+ lifetime-win gate.
- function gateSkinList(list,starterId){
-  list.forEach((item,i)=>{
-   if(item.bundle){item.wins=250;return}
-   if(item.id===starterId || (item.color==='#4aa8ff'&&item.name==='Modrá')){item.wins=0;return}
-   if(i===0 && !item.id){item.wins=0;return}
-   const tierCost=50+5*Math.min(10,Math.max(0,i-1));
-   item.wins=Math.max(50,Number(item.wins)||0,tierCost);
-  });
- }
- gateSkinList(SKINS,'__no_such_skin__');
- gateSkinList(RIFLE_SKINS,'standard');
- gateSkinList(SHOTGUN_SKINS,'shotgun_standard');
- gateSkinList(SHIELD_SKINS,'shield_standard');
- gateSkinList(FISH_SKINS,'fish_standard');
- OUTFIT_PRESETS.forEach((p,i)=>{if(i===0)p.wins=0;else p.wins=Math.max(50,Number(p.wins)||0,50+5*Math.min(8,i-1))});
- // Apply the same earned-win gate to every remaining cosmetic category, not only the guns.
- // Default look pieces stay free; Battle Pass items retain their BP-level requirement as well.
- function gateCosmeticList(list,starterValues,key='id'){
+ // Every category starts with two free choices. The next items cost 5, 10, 15, 20... earned wins.
+ // Verity and Lovity remain special shop bundles and keep their 250-win price/ownership lock.
+ function priceSkinList(list){
+  let regularIndex=0;
   list.forEach(item=>{
    if(item.bundle){item.wins=250;return}
-   if(starterValues.includes(item[key])){item.wins=0;return}
-   item.wins=Math.max(50,Number(item.wins)||0);
+   const slot=regularIndex++;
+   item.wins=slot<2?0:5*(slot-1);
   });
  }
- gateCosmeticList(ACCENTS,['#67e8f9'],'color');
- gateCosmeticList(SKIN_STYLES,['classic']);
- gateCosmeticList(HATS,['none']);
- gateCosmeticList(BACKBLINGS,['none','backpack']);
- gateCosmeticList(FACES,['😎']);
- gateCosmeticList(EMOTES,['🔥']);
+ [SKINS,ACCENTS,SKIN_STYLES,HATS,BACKBLINGS,FACES,EMOTES,RIFLE_SKINS,SHOTGUN_SKINS,SHIELD_SKINS,FISH_SKINS].forEach(priceSkinList);
 
+ // A quick outfit is unlocked at the same win threshold as its most expensive included piece.
+ // Special Verity/Lovity quick outfits are separate Shop bundles and retain their 250-win tag.
+ function componentCost(list,key,value){
+  const item=list.find(x=>x[key]===value);
+  return item?Math.max(0,Number(item.wins)||0):0;
+ }
+ function presetCost(p){
+  return Math.max(
+   componentCost(SKINS,'color',p.skin),
+   componentCost(ACCENTS,'color',p.accent),
+   componentCost(SKIN_STYLES,'id',p.style),
+   componentCost(HATS,'id',p.hat),
+   componentCost(BACKBLINGS,'id',p.backbling),
+   componentCost(FACES,'id',p.face),
+   componentCost(EMOTES,'id',p.emote)
+  );
+ }
+ OUTFIT_PRESETS.forEach(p=>{p.wins=presetCost(p)});
  // The previous library mostly recoloured a default silhouette. Build unique vector models
  // for each remaining named weapon, shield and fish so their Loadout preview matches gameplay.
  function poly(points){return points.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L')}
