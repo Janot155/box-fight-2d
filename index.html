@@ -1624,7 +1624,7 @@ function save(){try{localStorage.setItem('mr_name',name);localStorage.setItem('m
 function saveLook(){selectedWeaponSkin=selectedRifleSkin;try{localStorage.setItem('mr_skin',selectedSkin);localStorage.setItem('mr_hat',selectedHat);localStorage.setItem('mr_skin_style',selectedStyle);localStorage.setItem('mr_face',selectedFace);localStorage.setItem('mr_emote',selectedEmote);localStorage.setItem('mr_accent',selectedAccent);localStorage.setItem('mr_backbling',selectedBackbling);localStorage.setItem('mr_weapon_skin',selectedRifleSkin);localStorage.setItem('mr_rifle_skin',selectedRifleSkin);localStorage.setItem('mr_shotgun_skin',selectedShotgunSkin);localStorage.setItem('mr_shield_skin',selectedShieldSkin);localStorage.setItem('mr_fish_skin',selectedFishSkin)}catch(e){}if(P){P.skin=selectedSkin;P.hat=selectedHat;P.skinStyle=selectedStyle;P.face=selectedFace;P.accent=selectedAccent;P.backbling=selectedBackbling;P.weaponSkin=selectedRifleSkin;P.weaponSkins={rifle:selectedRifleSkin,shotgun:selectedShotgunSkin};P.shieldSkin=selectedShieldSkin;P.fishSkin=selectedFishSkin}renderWardrobe()}
 const ol=m=>$('ol').textContent=m;
 // Set this to the deployed central matchmaking service URL once, then redeploy the website.
-const MATCHMAKER_URL='https://YOUR-MATCHMAKER.onrender.com';
+const MATCHMAKER_URL='https://box-fight-2d.onrender.com';
 let matchmakingSocket=null,matchmakingConnectPromise=null,matchmakingQueueActive=false,queuedMatch=null,activeCentralMatchId=null;
 let selectedOnlineMode='1v1',selectedOnlineMethod='code';
 const ONLINE_COPY={
