@@ -1509,7 +1509,7 @@ const GRID=20;
 let P,B,walls=[],groups={},bullets=[],t=0,cdn=0,mode='bot',playing=false,over=false,last=0,K={},mx=0,my=0,md=false,editDrag=false,cw=0,ch=0,paused=false,editingMode=false,selectedEditCells=[],itemNotice='',itemNoticeUntil=0;
 let peer=null,conn=null,rcode='',waiting=false,onlineRole=null,seq=0,evq=[],lastEv=0,gone=0,lastSend=0,lastHeard=0,waitingBind=null;
 const MATCHMAKER_URL='https://box-fight-2d.onrender.com';
-let matchmakingSocket=null,matchmakingConnectPromise=null,matchmakingQueueActive=false,queueStartPromise=null,queuedMatch=null,activeCentralMatchId=null;
+let matchmakingSocket=null,matchmakingConnectPromise=null,matchmakingQueueActive=false,queueStartPromise=null,queuedMatch=null,activeCentralMatchId=null,matchmakingReconnectQueuePending=false;
 let selectedOnlineMode='1v1';try{const savedOnlineMode=localStorage.getItem('mr_online_mode');if(['1v1','1v2','2v2'].includes(savedOnlineMode))selectedOnlineMode=savedOnlineMode}catch(e){}
 let pingMs=null,lastPingSent=0,perfFrames=0,perfWindowStart=0,fpsValue=0;
 let fightFpsLimit=240,lastLoopFrame=0,gameFpsFrames=0,gameFpsWindowStart=0,gameFpsValue=0;
@@ -1711,7 +1711,7 @@ async function ensurePeerJS(){if(window.Peer)return;
  const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js'];
  for(const u of urls){try{await loadScript(u);if(window.Peer)return}catch(e){}}
  throw new Error('Nepodařilo se načíst online knihovnu.')}
-function sendNet(msg){try{if(conn&&conn.open)conn.send(msg)}catch(e){}}
+function sendNet(msg){try{if(conn&&conn.open){conn.send(msg);return true}}catch(e){}return false}
 // A small round-trip probe gives both online players an actual ping measurement.
 setInterval(()=>{if(conn&&conn.open){lastPingSent=performance.now();sendNet({type:'ping',sent:lastPingSent})}else{pingMs=null}},1000);
 function cleanupTransport(){waiting=false;waitingBind=null;const c=conn,p=peer;conn=null;peer=null;onlineRole=null;rcode='';try{if(c)c.close()}catch(e){}try{if(p)p.destroy()}catch(e){}}
@@ -1786,7 +1786,7 @@ function renderOnlineControls(){
   b.disabled=!!queueStartPromise;
  }
  const modeNames={'1v1':en?'1v1 duel':fr?'Duel 1v1':'Souboj 1v1','1v2':en?'1v2 team':fr?'Équipe 1v2':'Tým 1v2','2v2':en?'2v2 teams':fr?'Équipes 2v2':'Týmy 2v2'};
- const tip=$('.online-tip');if(tip)tip.textContent=selectedOnlineMode==='1v1'?(en?'Queue searches for players using the central matchmaking server. Room-code play is also available.':fr?'La file recherche des joueurs via le serveur central. Le code de salle est également disponible.':'Fronta hledá hráče přes centrální server. Funguje také hraní přes kód místnosti.'):(en?modeNames[selectedOnlineMode]+' is selectable, but full 3–4 player team gameplay needs multiplayer synchronization in the game engine.':fr?modeNames[selectedOnlineMode]+' est sélectionnable, mais le jeu doit encore synchroniser 3–4 joueurs.':modeNames[selectedOnlineMode]+' lze vybrat, ale herní engine zatím neumí synchronizovat týmový zápas pro 3–4 hráče.');
+ const tip=$('.online-tip');if(tip)tip.textContent=selectedOnlineMode==='1v1'?(en?'Central matchmaking finds an opponent; gameplay uses PeerJS/WebRTC. A TURN relay is attempted if direct connection is blocked. A sleeping free server can take about a minute to wake.':fr?'La file centrale trouve un adversaire; le jeu utilise PeerJS/WebRTC. Un relais TURN est essayé si la connexion directe échoue. Un serveur gratuit en veille peut mettre environ une minute à redémarrer.':'Centrální fronta najde soupeře; samotná hra používá PeerJS/WebRTC. Pokud přímé spojení neprojde, zkusí se TURN relay. Probuzení bezplatného serveru může trvat asi minutu.'):(en?modeNames[selectedOnlineMode]+' is selectable, but full 3–4 player team gameplay still needs multiplayer synchronization in the game engine.':fr?modeNames[selectedOnlineMode]+' est sélectionnable, mais le jeu en équipe à 3–4 joueurs nécessite encore la synchronisation multijoueur.':modeNames[selectedOnlineMode]+' lze vybrat, ale týmový zápas pro 3–4 hráče zatím potřebuje synchronizaci všech hráčů v herním enginu.');
 }
 function ensureSocketIoClient(){
  if(window.io)return Promise.resolve();
@@ -1803,18 +1803,24 @@ async function connectCentralMatchmaking(){
  if(matchmakingConnectPromise)return matchmakingConnectPromise;
  matchmakingConnectPromise=(async()=>{
   await ensureSocketIoClient();
-  const socket=window.io(MATCHMAKER_URL,{transports:['websocket','polling'],timeout:10000,reconnection:true});matchmakingSocket=socket;
-  socket.on('connect',()=>{if(matchmakingQueueActive)setMatchmakingStatus('PŘIPOJENO · HLEDÁM HRÁČE','searching')});
-  socket.on('disconnect',()=>{if(matchmakingQueueActive)setMatchmakingStatus('SPOJENÍ PŘERUŠENO · ZKUSÍM OBNOVU','error')});
-  socket.on('queue:joined',data=>setMatchmakingStatus('FRONTA '+(data?.mode||selectedOnlineMode)+' · '+(data?.waiting??'?')+'/'+(data?.needed??'?')+' HRÁČŮ','searching'));
-  socket.on('queue:error',data=>{matchmakingQueueActive=false;queuedMatch=null;activeCentralMatchId=null;renderOnlineControls();setMatchmakingStatus('CHYBA FRONTY · '+(data?.message||'Zkus to znovu.'),'error')});
+  const socket=window.io(MATCHMAKER_URL,{transports:['websocket','polling'],timeout:65000,reconnection:true,reconnectionAttempts:Infinity,reconnectionDelay:1000,reconnectionDelayMax:5000});matchmakingSocket=socket;
+  socket.on('connect',()=>{
+   if(matchmakingReconnectQueuePending&&matchmakingQueueActive&&!queuedMatch){
+    matchmakingReconnectQueuePending=false;
+    setMatchmakingStatus('SPOJENÍ OBNOVENO · ZNOVU SE ŘADÍM DO FRONTY','searching');
+    socket.emit('queue:join',{mode:selectedOnlineMode,name:String(name||'Player').slice(0,22)});
+   }else if(matchmakingQueueActive)setMatchmakingStatus('PŘIPOJENO · HLEDÁM HRÁČE','searching');
+  });
+  socket.on('disconnect',()=>{if(matchmakingQueueActive){matchmakingReconnectQueuePending=true;setMatchmakingStatus('SPOJENÍ PŘERUŠENO · AUTOMATICKY OBNOVUJI…','error')}});
+  socket.on('queue:joined',data=>{matchmakingReconnectQueuePending=false;setMatchmakingStatus('FRONTA '+(data?.mode||selectedOnlineMode)+' · '+(data?.waiting??'?')+'/'+(data?.needed??'?')+' HRÁČŮ','searching')});
+  socket.on('queue:error',data=>{matchmakingQueueActive=false;matchmakingReconnectQueuePending=false;waiting=false;queuedMatch=null;activeCentralMatchId=null;renderOnlineControls();setMatchmakingStatus('CHYBA FRONTY · '+(data?.message||'Zkus to znovu.'),'error')});
   socket.on('queue:left',()=>setMatchmakingStatus('FRONTA ZRUŠENA','offline'));
   socket.on('queue:expired',data=>{matchmakingQueueActive=false;queuedMatch=null;activeCentralMatchId=null;renderOnlineControls();setMatchmakingStatus(data?.message||'ČAS FRONTY VYPRŠEL. Zkus to znovu.','error')});
   socket.on('match:found',data=>handleCentralMatchFound(data));
   socket.on('match:ready',data=>handleCentralMatchReady(data));
   socket.on('match:cancelled',data=>{if(!data?.matchId||data.matchId===activeCentralMatchId||(queuedMatch&&data.matchId===queuedMatch.matchId)){matchmakingQueueActive=false;queuedMatch=null;activeCentralMatchId=null;waiting=false;renderOnlineControls();setMatchmakingStatus(data?.reason||'ZÁPAS BYL ZRUŠEN','error')}});
   await new Promise((resolve,reject)=>{
-   let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Čas spojení vypršel. Server se možná probouzí.'))},12000);
+   let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Server neodpověděl do 70 sekund. Pokud používá bezplatný hosting, může se teprve probouzet; zkus hledání znovu.'))},70000);
    socket.once('connect',()=>{if(done)return;done=true;clearTimeout(timer);resolve()});
    socket.once('connect_error',err=>{if(done)return;done=true;clearTimeout(timer);reject(new Error(err?.message||'Nelze se připojit k matchmaking serveru.'))});
   });return socket;
@@ -1822,6 +1828,7 @@ async function connectCentralMatchmaking(){
  try{return await matchmakingConnectPromise}catch(e){if(matchmakingSocket){try{matchmakingSocket.disconnect()}catch(_){}matchmakingSocket=null}throw e}finally{matchmakingConnectPromise=null}
 }
 function cancelCentralQueue(){
+ matchmakingReconnectQueuePending=false;
  if(matchmakingSocket&&matchmakingSocket.connected){try{matchmakingSocket.emit('queue:leave')}catch(_){}if(queuedMatch?.matchId)try{matchmakingSocket.emit('match:cancel',{matchId:queuedMatch.matchId})}catch(_){}}
  matchmakingQueueActive=false;queueStartPromise=null;queuedMatch=null;activeCentralMatchId=null;cleanupTransport();renderOnlineControls();setMatchmakingStatus('HLEDÁNÍ ZRUŠENO','offline');
 }
@@ -1835,7 +1842,7 @@ async function startCentralQueue(){
    cleanupTransport();queuedMatch=null;setMatchmakingStatus('PŘIPOJUJI CENTRÁLNÍ SERVER…','searching');renderOnlineControls();
    const socket=await connectCentralMatchmaking();
    if(selectedOnlineMode!==requestedMode)return;
-   matchmakingQueueActive=true;waiting=true;setMatchmakingStatus('HLEDÁM HRU · '+requestedMode,'searching');
+   matchmakingReconnectQueuePending=false;matchmakingQueueActive=true;waiting=true;setMatchmakingStatus('HLEDÁM HRU · '+requestedMode,'searching');
    socket.emit('queue:join',{mode:requestedMode,name:String(name).slice(0,22)});
   }catch(e){matchmakingQueueActive=false;waiting=false;setMatchmakingStatus('MATCHMAKING NEDOSTUPNÝ · '+e.message,'error')}
  })();
@@ -1844,7 +1851,7 @@ async function startCentralQueue(){
 }
 function handleCentralMatchFound(data){
  if(!data||!data.matchId)return;
- matchmakingQueueActive=false;waiting=true;queuedMatch=data;activeCentralMatchId=data.matchId;renderOnlineControls();
+ matchmakingQueueActive=false;matchmakingReconnectQueuePending=false;waiting=true;queuedMatch=data;activeCentralMatchId=data.matchId;renderOnlineControls();
  if(data.mode!=='1v1'){
   waiting=false;queuedMatch=null;activeCentralMatchId=null;
   setMatchmakingStatus('SKUPINA NALEZENA · '+data.mode+' · '+((data.players&&data.players.length)||0)+' HRÁČŮ','error');
@@ -2351,7 +2358,7 @@ function loop(now){
   const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;lastLoopFrame=now;
   try{upd(over?0:dt)}catch(updateError){console.error('[Box Fight] Recovered from game-update error:',updateError)}
   if(online()&&conn&&conn.open&&now-lastHeard>7000&&!over)finish(true,'Spojení se soupeřem bylo přerušeno – vyhrál jsi!',true);
-  if(online()&&conn&&conn.open&&now-lastSend>33){lastSend=now;sendNet({type:'state',p:{n:name,x:Math.round(P.x),y:Math.round(P.y),a:+P.ang.toFixed(3),hp:P.hp,sh:P.sh,w:P.w,wood:P.wood,ammo:{rifle:P.ammo.rifle,shotgun:P.ammo.shotgun},shotgunReserve:P.reserve.shotgun,reload:P.reload,reloadWeapon:P.reloadWeapon,shieldItem:P.shieldItem,fishItem:P.fishItem,skin:P.skin,hat:P.hat,skinStyle:P.skinStyle,accent:P.accent,backbling:P.backbling,face:P.face,weaponSkin:P.weaponSkin||selectedRifleSkin,weaponSkins:P.weaponSkins||{rifle:selectedRifleSkin,shotgun:selectedShotgunSkin},shieldSkin:P.shieldSkin||selectedShieldSkin,fishSkin:P.fishSkin||selectedFishSkin,u:P.use?P.use.kind:'',ul:P.use?+P.use.left.toFixed(2):0},ev:evq})}
+  if(online()&&conn&&conn.open&&now-lastSend>66){lastSend=now;const eventBatch=evq.slice();const sent=sendNet({type:'state',p:{n:name,x:Math.round(P.x),y:Math.round(P.y),a:+P.ang.toFixed(3),hp:P.hp,sh:P.sh,w:P.w,wood:P.wood,ammo:{rifle:P.ammo.rifle,shotgun:P.ammo.shotgun},shotgunReserve:P.reserve.shotgun,reload:P.reload,reloadWeapon:P.reloadWeapon,shieldItem:P.shieldItem,fishItem:P.fishItem,skin:P.skin,hat:P.hat,skinStyle:P.skinStyle,accent:P.accent,backbling:P.backbling,face:P.face,weaponSkin:P.weaponSkin||selectedRifleSkin,weaponSkins:P.weaponSkins||{rifle:selectedRifleSkin,shotgun:selectedShotgunSkin},shieldSkin:P.shieldSkin||selectedShieldSkin,fishSkin:P.fishSkin||selectedFishSkin,u:P.use?P.use.kind:'',ul:P.use?+P.use.left.toFixed(2):0},ev:eventBatch});if(sent&&eventBatch.length)evq=evq.slice(eventBatch.length)}
   if(!paused){try{draw()}catch(renderError){console.error('[Box Fight] Recovered from rendering error:',renderError);try{ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.clearRect(0,0,cw,ch);ctx.fillStyle='#101725';ctx.fillRect(0,0,cw,ch);ctx.fillStyle='#e8f3ff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('Obnovuji vykreslování hry…',cw/2,ch/2)}catch(_){}}}
   gameFpsFrames++;if(!gameFpsWindowStart)gameFpsWindowStart=now;const gameElapsed=now-gameFpsWindowStart;if(gameElapsed>=500){gameFpsValue=Math.round(gameFpsFrames*1000/gameElapsed);gameFpsFrames=0;gameFpsWindowStart=now}
  }catch(loopError){console.error('[Box Fight] Game loop recovered:',loopError)}
