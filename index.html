@@ -1653,33 +1653,12 @@ const METERED_APP='';   // např. 'moje-appka'  (z adresy moje-appka.metered.liv
 const METERED_KEY='';   // API klíč z Metered dashboardu
 // DRUHÁ MOŽNOST (jednodušší): do hranatých závorek vlož celé pole iceServers z Metered dashboardu
 // (TURN Server → u credentialu tlačítko "Instructions" → zkopíruj to, co je uvnitř [ ... ]).
-const CUSTOM_ICE=[var myPeerConnection = new RTCPeerConnection({
-  iceServers: [
-      {
-        urls: "stun:stun.relay.metered.ca:80",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:80",
-        username: "6480db87a865fded325f132e",
-        credential: "y3aEV5P8NOKKt+aL",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:80?transport=tcp",
-        username: "6480db87a865fded325f132e",
-        credential: "y3aEV5P8NOKKt+aL",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:443",
-        username: "6480db87a865fded325f132e",
-        credential: "y3aEV5P8NOKKt+aL",
-      },
-      {
-        urls: "turns:global.relay.metered.ca:443?transport=tcp",
-        username: "6480db87a865fded325f132e",
-        credential: "y3aEV5P8NOKKt+aL",
-      },
-  ],
-});
+const CUSTOM_ICE=[
+ {urls:'stun:stun.relay.metered.ca:80'},
+ {urls:'turn:global.relay.metered.ca:80',username:'6480db87a865fded325f132e',credential:'y3aEV5P8NOKKt+aL'},
+ {urls:'turn:global.relay.metered.ca:80?transport=tcp',username:'6480db87a865fded325f132e',credential:'y3aEV5P8NOKKt+aL'},
+ {urls:'turn:global.relay.metered.ca:443',username:'6480db87a865fded325f132e',credential:'y3aEV5P8NOKKt+aL'},
+ {urls:'turns:global.relay.metered.ca:443?transport=tcp',username:'6480db87a865fded325f132e',credential:'y3aEV5P8NOKKt+aL'}
 ];
 const STUN_SERVERS=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']}];
 const FALLBACK_TURN=[
